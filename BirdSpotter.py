@@ -1,5 +1,7 @@
 import pickle
 import os.path
+from datetime import date
+from googleapiclient.http import MediaFileUpload
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -19,30 +21,29 @@ def main():
 def take_pic(pic_num):
     # Take the picture. Should call the send_pic function, maybe take more than 1 pic
     print("b")
+    picname = "a"
     # Save the pic, using pic_count to keep track
+    # Increment counter with each pic, name includes count
     print("d")
     # Send it to the drive
-    send_pic()
+    send_pic(picname)
 
 
 def ir_checker():
     print("c")
 
 
-def send_pic():
-    # Send the pic off to the cloud. Need to set up a google drive or something for it
-    # Probably make a folder for each day, check if exists. Increment counter with each pic, name includes count
-    # Delete pic after, so we don't fill up hard drive? Shouldn't matter much, just let it overwrite.
-    # Max will be the number of pics taken in one session (day)
+def send_pic(picname):
 
+    # Get the date for folder check
+    day = date.today()
+    foldername = "AutoBirdPics " + day.strftime("%d-%b-%Y")
     # Google login code taken from https://developers.google.com/drive/api/v3/quickstart/python?authuser=1
-    # If modifying these scopes, delete the file token.pickle.
     SCOPES = ['https://www.googleapis.com/auth/drive']  # Needs to create folders/files, see if folder exists
-
     creds = None
     # The file token.pickle stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
-    # time.
+    # time
     if os.path.exists('token.pickle'):
         with open('token.pickle', 'rb') as token:
             creds = pickle.load(token)
@@ -57,23 +58,43 @@ def send_pic():
         # Save the credentials for the next run
         with open('token.pickle', 'wb') as token:
             pickle.dump(creds, token)
-
+    print("{0}".format(foldername))
     service = build('drive', 'v3', credentials=creds)
-    # and mimeType='application/vnd.google-apps.folder'
-    # Call the Drive v3 API
-    z = service.files()
-    results = service.files().list(q="'My Drive' in parents",
-                                   spaces="drive",
-                                   fields="nextPageToken, files(id, name)").execute()
-    items = results.get('files', [])
 
+    # Check for a folder matching current date
+    results = service.files().list(
+        q="name='{0}'".format(foldername),
+        spaces="drive",
+        fields="nextPageToken, files(id, name)").execute()
+    items = results.get('files', [])
     if not items:
-        print('No files found.')
+        # If it doesn't exist, create it
+        # Format - AutoBirdPics dd-mon-yyyy
+        folder_metadata = {
+            "name": foldername,
+            "mimeType": "application/vnd.google-apps.folder",
+            "parents": ["15Xn3O4BaGPRjun25PWNGyAZIX6p8NLFz"]
+            # The ID of the BirdPics folder. Must be in a list to work as a parent, for reasons known only to Google
+        }
+        folder = service.files().create(body=folder_metadata,
+                                        fields="id").execute()
+        folderid = folder.get("id")
     else:
-        print('Files:')
-        for item in items:
-            print(u'{0} ({1})'.format(item['name'], item['id']))
-    print("d")
+        # If it exists, get the ID
+        folderid = items[0].get("id")
+
+
+
+    # Add pic to today's folder
+    ourdir = os.getcwd()
+    picname = ourdir + "\\TestBird.jpg"
+    pic = MediaFileUpload(picname, mimetype="image/jpeg")
+    pic_meta = {"name": 'TestBird',
+                "parents": ["{0}".format(folderid)]}
+    # Google likes IDs better than names, so use the ID of the folder we made
+    drivepic = service.files().create(body=pic_meta,
+                                      media_body=pic,
+                                      fields="id").execute()
 
 
 if __name__ == "__main__":
