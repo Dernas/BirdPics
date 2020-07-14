@@ -1,30 +1,37 @@
 import pickle
 import os.path
+import time
 from datetime import date
+# from picamera import PiCamera
 from googleapiclient.http import MediaFileUpload
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
-import time
 
 
 def main():
     # Check if IR sensor has picked up any birds. Needs a rest timer if bird is found - 30 sec?
     # Temp: Run on a timer, pic every 10 min
+    # 30 sec delay before taking any pics
+    time.sleep(30)
     pic_count = 0
-    #while True:
+    # while True:
     pic_count += 1
     take_pic(pic_count)
-    # time.sleep(600)
+    time.sleep(600)
 
 
 def take_pic(pic_num):
-    # Take the picture. Should call the send_pic function, maybe take more than 1 pic
-    print("b")
-    picname = "a"
-    # Save the pic, using pic_count to keep track
-    # Increment counter with each pic, name includes count
-    print("d")
+    # Take the picture.
+    #camera = PiCamera()
+    #camera.start_preview()
+    ourdir = os.getcwd()
+    picname = ourdir + "\\TestBird" + str(pic_num) + ".jpg"
+    # Save the pic, using pic_num to keep track
+    time.sleep(2)
+    # Camera needs 2 seconds to adjust
+    #camera.capture(picname)
+    #camera.stop_preview()
     # Send it to the drive
     send_pic(picname)
 
@@ -34,7 +41,6 @@ def ir_checker():
 
 
 def send_pic(picname):
-
     # Get the date for folder check
     day = date.today()
     foldername = "AutoBirdPics " + day.strftime("%d-%b-%Y")
@@ -83,13 +89,13 @@ def send_pic(picname):
         # If it exists, get the ID
         folderid = items[0].get("id")
 
-
+    filename = picname.split("\\")[-1]
+    picturename = filename.split(".")[0]
+    # Get a nice name for the picture
 
     # Add pic to today's folder
-    ourdir = os.getcwd()
-    picname = ourdir + "\\TestBird.jpg"
     pic = MediaFileUpload(picname, mimetype="image/jpeg")
-    pic_meta = {"name": 'TestBird',
+    pic_meta = {"name": picturename,
                 "parents": ["{0}".format(folderid)]}
     # Google likes IDs better than names, so use the ID of the folder we made
     drivepic = service.files().create(body=pic_meta,
