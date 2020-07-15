@@ -66,7 +66,6 @@ def send_pic(picname, ourdir):
         # Save the credentials for the next run
         with open(ourdir + 'token.pickle', 'wb') as token:
             pickle.dump(creds, token)
-    print("{0}".format(foldername))
     service = build('drive', 'v3', credentials=creds)
 
     # Check for a folder matching current date
