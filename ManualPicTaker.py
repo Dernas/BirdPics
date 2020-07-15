@@ -14,8 +14,8 @@ def main():
     # Take a pic when requested by the user
     try:
         take_pic()
-        sys.exit(0)
-    except:
+    except Exception as e:
+        print(e)
         print("Picture failed! Camera in use or no internet connection")
         sys.exit(-1)
 
