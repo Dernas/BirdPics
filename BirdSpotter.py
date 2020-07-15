@@ -2,7 +2,7 @@ import pickle
 import os.path
 import time
 from datetime import date
-# from picamera import PiCamera
+from picamera import PiCamera
 from googleapiclient.http import MediaFileUpload
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -13,10 +13,9 @@ def main():
     # Check if IR sensor has picked up any birds.
     # Temp: Run on a timer, pic every 10 min
     # 1 min delay before taking any pics, allow Pi to boot
-    time.sleep(6)
+    time.sleep(60)
     pic_count = 0
-    camera = "a"
-    # camera = PiCamera()
+    camera = PiCamera()
     while True:
         pic_count += 1
         take_pic(pic_count, camera)
