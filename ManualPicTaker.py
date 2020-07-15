@@ -27,7 +27,7 @@ def take_pic():
     # set the dir
     currenttime = datetime.now()
     ourdir = "/home/pi/Birds/BirdPics/"
-    picname = ourdir + "ManualPicture" + currenttime.strftime("%H-%M-%S") + ".jpg"
+    picname = ourdir + "ManualPicture " + currenttime.strftime("%H:%M") + ".jpg"
     camera = PiCamera()
     camera.vflip = True
     camera.hflip = True

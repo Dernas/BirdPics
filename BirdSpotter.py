@@ -30,7 +30,7 @@ def take_pic(pic_num, camera):
     camera.start_preview()
     # set the dir
     ourdir = "/home/pi/Birds/BirdPics/"
-    picname = ourdir + "AutoPicture" + str(pic_num) + ".jpg"
+    picname = ourdir + "AutoPicture " + str(pic_num) + ".jpg"
     # Save the pic, using pic_num to keep track
     time.sleep(2)
     # Camera needs 2 seconds to adjust
