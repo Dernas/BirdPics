@@ -2,7 +2,7 @@ import pickle
 import os.path
 import time
 from datetime import date
-# from picamera import PiCamera
+from picamera import PiCamera
 from googleapiclient.http import MediaFileUpload
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -10,28 +10,29 @@ from google.auth.transport.requests import Request
 
 
 def main():
-    # Check if IR sensor has picked up any birds. Needs a rest timer if bird is found - 30 sec?
+    # Check if IR sensor has picked up any birds.
     # Temp: Run on a timer, pic every 10 min
-    # 30 sec delay before taking any pics
-    time.sleep(30)
+    # 1 min delay before taking any pics, allow Pi to boot
+    time.sleep(60)
     pic_count = 0
-    # while True:
-    pic_count += 1
-    take_pic(pic_count)
-    time.sleep(600)
+    while True:
+        pic_count += 1
+        take_pic(pic_count)
+        time.sleep(600)
 
 
 def take_pic(pic_num):
     # Take the picture.
-    #camera = PiCamera()
-    #camera.start_preview()
-    ourdir = os.getcwd()
-    picname = ourdir + "\\TestBird" + str(pic_num) + ".jpg"
+    camera = PiCamera()
+    camera.start_preview()
+    # set the dir
+    ourdir = "/home/pi/Birds/BirdPics"
+    picname = ourdir + "/AutoPicture" + str(pic_num) + ".jpg"
     # Save the pic, using pic_num to keep track
     time.sleep(2)
     # Camera needs 2 seconds to adjust
-    #camera.capture(picname)
-    #camera.stop_preview()
+    camera.capture(picname)
+    camera.stop_preview()
     # Send it to the drive
     send_pic(picname)
 
@@ -50,8 +51,8 @@ def send_pic(picname):
     # The file token.pickle stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
     # time
-    if os.path.exists('token.pickle'):
-        with open('token.pickle', 'rb') as token:
+    if os.path.exists('/home/pi/Birds/BirdPics/token.pickle'):
+        with open('/home/pi/Birds/BirdPics/token.pickle', 'rb') as token:
             creds = pickle.load(token)
     # If there are no (valid) credentials available, let the user log in.
     if not creds or not creds.valid:
@@ -59,10 +60,10 @@ def send_pic(picname):
             creds.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_secrets_file(
-                'credentials.json', SCOPES)
+                '/home/pi/Birds/BirdPics/credentials.json', SCOPES)
             creds = flow.run_local_server(port=0)
         # Save the credentials for the next run
-        with open('token.pickle', 'wb') as token:
+        with open('/home/pi/Birds/BirdPics/token.pickle', 'wb') as token:
             pickle.dump(creds, token)
     print("{0}".format(foldername))
     service = build('drive', 'v3', credentials=creds)
@@ -89,7 +90,7 @@ def send_pic(picname):
         # If it exists, get the ID
         folderid = items[0].get("id")
 
-    filename = picname.split("\\")[-1]
+    filename = picname.split("/")[-1]
     picturename = filename.split(".")[0]
     # Get a nice name for the picture
 
