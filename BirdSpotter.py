@@ -15,15 +15,15 @@ def main():
     # 1 min delay before taking any pics, allow Pi to boot
     time.sleep(60)
     pic_count = 0
+    camera = PiCamera()
     while True:
         pic_count += 1
-        take_pic(pic_count)
+        take_pic(pic_count, camera)
         time.sleep(600)
 
 
-def take_pic(pic_num):
+def take_pic(pic_num, camera):
     # Take the picture.
-    camera = PiCamera()
     camera.start_preview()
     # set the dir
     ourdir = "/home/pi/Birds/BirdPics"
