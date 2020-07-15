@@ -3,6 +3,7 @@ import os.path
 import time
 import sys
 from datetime import date
+from datetime import datetime
 from picamera import PiCamera
 from googleapiclient.http import MediaFileUpload
 from googleapiclient.discovery import build
@@ -18,13 +19,15 @@ def main():
         print(e)
         print("Picture failed! Camera in use or no internet connection")
         sys.exit(-1)
+    sys.exit(0)
 
 
 def take_pic():
     # Takes the picture.
     # set the dir
+    currenttime = datetime.now()
     ourdir = "/home/pi/Birds/BirdPics/"
-    picname = ourdir + "ManualPicture" + ".jpg"
+    picname = ourdir + "ManualPicture" + currenttime.strftime("%H-%M-%S") + ".jpg"
     camera = PiCamera()
     camera.vflip = True
     camera.hflip = True
