@@ -2,7 +2,7 @@ import pickle
 import os.path
 import time
 from datetime import date
-from picamera import PiCamera
+# from picamera import PiCamera
 from googleapiclient.http import MediaFileUpload
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -13,9 +13,10 @@ def main():
     # Check if IR sensor has picked up any birds.
     # Temp: Run on a timer, pic every 10 min
     # 1 min delay before taking any pics, allow Pi to boot
-    time.sleep(60)
+    time.sleep(6)
     pic_count = 0
-    camera = PiCamera()
+    camera = "a"
+    # camera = PiCamera()
     while True:
         pic_count += 1
         take_pic(pic_count, camera)
@@ -26,22 +27,27 @@ def take_pic(pic_num, camera):
     # Take the picture.
     camera.start_preview()
     # set the dir
-    ourdir = "/home/pi/Birds/BirdPics"
-    picname = ourdir + "/AutoPicture" + str(pic_num) + ".jpg"
+    ourdir = "/home/pi/Birds/BirdPics/"
+    picname = ourdir + "AutoPicture" + str(pic_num) + ".jpg"
     # Save the pic, using pic_num to keep track
     time.sleep(2)
     # Camera needs 2 seconds to adjust
     camera.capture(picname)
     camera.stop_preview()
     # Send it to the drive
-    send_pic(picname)
+    try:
+        send_pic(picname, ourdir)
+    except:
+        # This should be a more precise error, really just looking for if there's no connection. File is still saved
+        # locally, so can SCP and grab it if needed once connection is restored
+        pass
 
 
 def ir_checker():
     print("c")
 
 
-def send_pic(picname):
+def send_pic(picname, ourdir):
     # Get the date for folder check
     day = date.today()
     foldername = "AutoBirdPics " + day.strftime("%d-%b-%Y")
@@ -51,8 +57,8 @@ def send_pic(picname):
     # The file token.pickle stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
     # time
-    if os.path.exists('/home/pi/Birds/BirdPics/token.pickle'):
-        with open('/home/pi/Birds/BirdPics/token.pickle', 'rb') as token:
+    if os.path.exists(ourdir + 'token.pickle'):
+        with open(ourdir + 'token.pickle', 'rb') as token:
             creds = pickle.load(token)
     # If there are no (valid) credentials available, let the user log in.
     if not creds or not creds.valid:
@@ -60,10 +66,10 @@ def send_pic(picname):
             creds.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_secrets_file(
-                '/home/pi/Birds/BirdPics/credentials.json', SCOPES)
+               ourdir + 'credentials.json', SCOPES)
             creds = flow.run_local_server(port=0)
         # Save the credentials for the next run
-        with open('/home/pi/Birds/BirdPics/token.pickle', 'wb') as token:
+        with open(ourdir + 'token.pickle', 'wb') as token:
             pickle.dump(creds, token)
     print("{0}".format(foldername))
     service = build('drive', 'v3', credentials=creds)
