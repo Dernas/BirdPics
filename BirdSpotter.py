@@ -1,7 +1,7 @@
 import pickle
 import os.path
 import time
-from datetime import date
+import datetime
 from picamera import PiCamera
 from googleapiclient.http import MediaFileUpload
 from googleapiclient.discovery import build
@@ -15,13 +15,18 @@ def main():
     # 1 min delay before taking any pics, allow Pi to boot
     time.sleep(60)
     pic_count = 0
+    start_time = datetime.time(5, 0, 0)
+    end_time = datetime.time(22, 0, 0)
     while True:
-        camera = PiCamera()
-        camera.vflip = True
-        camera.hflip = True
-        pic_count += 1
-        take_pic(pic_count, camera)
-        camera.close()
+        current_time = datetime.datetime.now().time()
+        if start_time < current_time < end_time:
+            # Assumed no birds between 22:00 and 5:00
+            camera = PiCamera()
+            camera.vflip = True
+            camera.hflip = True
+            pic_count += 1
+            take_pic(pic_count, camera)
+            camera.close()
         time.sleep(600)
 
 
@@ -51,7 +56,7 @@ def ir_checker():
 
 def send_pic(picname, ourdir):
     # Get the date for folder check
-    day = date.today()
+    day = datetime.date.today()
     foldername = "AutoBirdPics " + day.strftime("%d-%b-%Y")
     # Google login code taken from https://developers.google.com/drive/api/v3/quickstart/python?authuser=1
     SCOPES = ['https://www.googleapis.com/auth/drive']  # Needs to create folders/files, see if folder exists
