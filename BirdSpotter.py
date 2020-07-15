@@ -15,10 +15,12 @@ def main():
     # 1 min delay before taking any pics, allow Pi to boot
     time.sleep(60)
     pic_count = 0
-    camera = PiCamera()
     while True:
+        camera = PiCamera()
+        camera.vflip = True
         pic_count += 1
         take_pic(pic_count, camera)
+        camera.close()
         time.sleep(600)
 
 
