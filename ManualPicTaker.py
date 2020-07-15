@@ -1,6 +1,7 @@
 import pickle
 import os.path
 import time
+import sys
 from datetime import date
 from picamera import PiCamera
 from googleapiclient.http import MediaFileUpload
@@ -10,43 +11,32 @@ from google.auth.transport.requests import Request
 
 
 def main():
-    # Check if IR sensor has picked up any birds.
-    # Temp: Run on a timer, pic every 10 min
-    # 1 min delay before taking any pics, allow Pi to boot
-    time.sleep(60)
-    pic_count = 0
-    while True:
-        camera = PiCamera()
-        camera.vflip = True
-        camera.hflip = True
-        pic_count += 1
-        take_pic(pic_count, camera)
-        camera.close()
-        time.sleep(600)
+    # Take a pic when requested by the user
+    try:
+        take_pic()
+        sys.exit(0)
+    except:
+        print("Picture failed! Camera in use or no internet connection")
+        sys.exit(-1)
 
 
-def take_pic(pic_num, camera):
-    # Take the picture.
-    camera.start_preview()
+def take_pic():
+    # Takes the picture.
     # set the dir
     ourdir = "/home/pi/Birds/BirdPics/"
-    picname = ourdir + "AutoPicture" + str(pic_num) + ".jpg"
+    picname = ourdir + "ManualPicture" + ".jpg"
+    camera = PiCamera()
+    camera.vflip = True
+    camera.hflip = True
+    camera.start_preview()
     # Save the pic, using pic_num to keep track
     time.sleep(2)
     # Camera needs 2 seconds to adjust
     camera.capture(picname)
     camera.stop_preview()
+    camera.close()
     # Send it to the drive
-    try:
-        send_pic(picname, ourdir)
-    except:
-        # This should be a more precise error, really just looking for if there's no connection. File is still saved
-        # locally, so can SCP and grab it if needed once connection is restored
-        pass
-
-
-def ir_checker():
-    print("c")
+    send_pic(picname, ourdir)
 
 
 def send_pic(picname, ourdir):
