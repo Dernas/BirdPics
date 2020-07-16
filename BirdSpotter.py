@@ -27,6 +27,8 @@ def main():
             pic_count += 1
             take_pic(pic_count, camera)
             camera.close()
+        elif pic_count != 0:
+            pic_count = 0
         time.sleep(600)
 
 
