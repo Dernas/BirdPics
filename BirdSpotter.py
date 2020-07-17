@@ -1,4 +1,5 @@
 import pickle
+import os
 import os.path
 import time
 import datetime
@@ -14,9 +15,9 @@ def main():
     # Temp: Run on a timer, pic every 10 min
     # 1 min delay before taking any pics, allow Pi to boot
     time.sleep(60)
-    pic_count = 0
     start_time = datetime.time(5, 0, 0)
     end_time = datetime.time(22, 0, 0)
+    pic_count = check_date()
     while True:
         current_time = datetime.datetime.now().time()
         if start_time < current_time < end_time:
@@ -24,12 +25,32 @@ def main():
             camera = PiCamera()
             camera.vflip = True
             camera.hflip = True
-            pic_count += 1
             take_pic(pic_count, camera)
             camera.close()
-        elif pic_count != 0:
-            pic_count = 0
+            pic_count += 1
+            with open("Count.txt", "w+") as f:
+                f.write("%d" % pic_count)
         time.sleep(600)
+        pic_count = check_date()
+
+
+def check_date():
+    # Check to see if it's a new day
+    with open("Date.txt") as f:
+        olddate = f.readline()
+    date = datetime.date.today().strftime("%d-%b-%Y")
+    if olddate == date:
+        # If the day hasn't changed, we had a reboot or auto-check and should pick up the count where we left off
+        with open("Count.txt") as g:
+            pic_count = int(g.readline())
+    else:
+        # If it has, we set pic_count to 1 and update the date + saved count
+        with open("Date.txt", "w") as f:
+            f.write(date)
+        with open("Count.txt", "r+") as g:
+            g.write("1")
+        pic_count = 1
+    return pic_count
 
 
 def take_pic(pic_num, camera):
@@ -46,9 +67,13 @@ def take_pic(pic_num, camera):
     # Send it to the drive
     try:
         send_pic(picname, ourdir)
+        send_offlines(ourdir)
+        # If we got to this function, we have a connection again
     except:
         # This should be a more precise error, really just looking for if there's no connection. File is still saved
-        # locally, so can SCP and grab it if needed once connection is restored
+        # locally, and will be sent once connection is back
+        # Rename the file to indicate it was saved offline
+        os.rename(r"%s" % picname, r"OfflinePic " + datetime.datetime.now().strftime("%H:%M %d-%b-%Y") + ".jpg")
         pass
 
 
@@ -56,10 +81,7 @@ def ir_checker():
     print("c")
 
 
-def send_pic(picname, ourdir):
-    # Get the date for folder check
-    day = datetime.date.today()
-    foldername = "AutoBirdPics " + day.strftime("%d-%b-%Y")
+def login(ourdir):
     # Google login code taken from https://developers.google.com/drive/api/v3/quickstart/python?authuser=1
     SCOPES = ['https://www.googleapis.com/auth/drive']  # Needs to create folders/files, see if folder exists
     creds = None
@@ -81,7 +103,31 @@ def send_pic(picname, ourdir):
         with open(ourdir + 'token.pickle', 'wb') as token:
             pickle.dump(creds, token)
     service = build('drive', 'v3', credentials=creds)
+    return service
 
+
+def send_offlines(ourdir):
+    # Send any pictures that were taken while offline to the drive
+    service = login(ourdir)
+    # check files in dir:
+    for file in os.listdir(ourdir):
+        if "Offline" in file:
+            picturename = file.split(".")[0]
+            # Get a nice name for the picture
+            pic = MediaFileUpload(ourdir + "/" + file, mimetype="image/jpeg")
+            pic_meta = {"name": picturename,
+                        "parents": ["15Xn3O4BaGPRjun25PWNGyAZIX6p8NLFz"]}
+            # Dump it into the main folder, let user use timestamps to sort
+            service.files().create(body=pic_meta,
+                                   media_body=pic,
+                                   fields="id").execute()
+
+
+def send_pic(picname, ourdir):
+    # Get the date for folder check
+    day = datetime.date.today()
+    foldername = "AutoBirdPics " + day.strftime("%d-%b-%Y")
+    service = login(ourdir)
     # Check for a folder matching current date
     results = service.files().list(
         q="name='{0}'".format(foldername),
