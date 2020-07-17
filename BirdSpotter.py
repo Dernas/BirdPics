@@ -15,6 +15,7 @@ def main():
     # Temp: Run on a timer, pic every 10 min
     # 1 min delay before taking any pics, allow Pi to boot
     time.sleep(60)
+    current_day = datetime.date.today()
     start_time = datetime.time(5, 0, 0)
     end_time = datetime.time(22, 0, 0)
     pic_count = check_date()
@@ -31,7 +32,9 @@ def main():
             with open("Count.txt", "w+") as f:
                 f.write("%d" % pic_count)
         time.sleep(600)
-        pic_count = check_date()
+        if datetime.date.today() != current_day:
+            pic_count = check_date()
+            current_day = datetime.date.today()
 
 
 def check_date():
