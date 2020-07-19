@@ -124,6 +124,7 @@ def send_offlines(ourdir):
             service.files().create(body=pic_meta,
                                    media_body=pic,
                                    fields="id").execute()
+            os.remove(file)
 
 
 def send_pic(picname, ourdir):
