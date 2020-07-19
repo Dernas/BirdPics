@@ -3,6 +3,7 @@ import os
 import os.path
 import time
 import datetime
+import RPi.GPIO as GPIO
 from picamera import PiCamera
 from googleapiclient.http import MediaFileUpload
 from googleapiclient.discovery import build
@@ -12,26 +13,30 @@ from google.auth.transport.requests import Request
 
 def main():
     # Check if IR sensor has picked up any birds.
-    # Temp: Run on a timer, pic every 10 min
     # 1 min delay before taking any pics, allow Pi to boot
     time.sleep(60)
+    pir_input = 29
+    start_pir(pir_input)
     current_day = datetime.date.today()
     start_time = datetime.time(5, 0, 0)
-    end_time = datetime.time(22, 0, 0)
+    end_time = datetime.time(21, 0, 0)
     pic_count = check_date()
     while True:
         current_time = datetime.datetime.now().time()
         if start_time < current_time < end_time:
-            # Assumed no birds between 22:00 and 5:00
-            camera = PiCamera()
-            camera.vflip = True
-            camera.hflip = True
-            take_pic(pic_count, camera)
-            camera.close()
-            pic_count += 1
-            with open("Count.txt", "w+") as f:
-                f.write("%d" % pic_count)
-        time.sleep(600)
+            # Assumed no birds between 21:00 and 5:00
+            if GPIO.input(pir_input):
+                camera = PiCamera()
+                camera.vflip = True
+                camera.hflip = True
+                take_pic(pic_count, camera)
+                camera.close()
+                pic_count += 1
+                with open("Count.txt", "w+") as f:
+                    f.write("%d" % pic_count)
+                # time.sleep(50)
+                time.sleep(10)
+            # time.sleep(10)
         if datetime.date.today() != current_day:
             pic_count = check_date()
             current_day = datetime.date.today()
@@ -80,8 +85,13 @@ def take_pic(pic_num, camera):
         pass
 
 
-def ir_checker():
-    print("c")
+def start_pir(pir_input):
+    # Pi pinout from https://learn.adafruit.com/assets/73285
+    # Base code from https://www.electronicwings.com/raspberry-pi/pir-motion-sensor-interfacing-with-raspberry-pi
+    GPIO.setwarnings(False)
+    GPIO.setmode(GPIO.BOARD)
+    GPIO.setup(pir_input, GPIO.IN)
+
 
 
 def login(ourdir):
@@ -124,6 +134,7 @@ def send_offlines(ourdir):
             service.files().create(body=pic_meta,
                                    media_body=pic,
                                    fields="id").execute()
+            os.remove(file)
 
 
 def send_pic(picname, ourdir):
