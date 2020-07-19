@@ -16,20 +16,16 @@ def main():
     # 1 min delay before taking any pics, allow Pi to boot
     time.sleep(60)
     pir_input = 29
-    print("a")
     start_pir(pir_input)
     current_day = datetime.date.today()
     start_time = datetime.time(5, 0, 0)
     end_time = datetime.time(21, 0, 0)
     pic_count = check_date()
-    print("b")
     while True:
         current_time = datetime.datetime.now().time()
         if start_time < current_time < end_time:
-            print("c")
             # Assumed no birds between 21:00 and 5:00
             if GPIO.input(pir_input):
-                print("d")
                 camera = PiCamera()
                 camera.vflip = True
                 camera.hflip = True
@@ -38,9 +34,8 @@ def main():
                 pic_count += 1
                 with open("Count.txt", "w+") as f:
                     f.write("%d" % pic_count)
-                # time.sleep(50)
-                time.sleep(1)
-            # time.sleep(10)
+                time.sleep(50)
+            time.sleep(10)
         if datetime.date.today() != current_day:
             pic_count = check_date()
             current_day = datetime.date.today()
