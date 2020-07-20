@@ -34,11 +34,10 @@ def main():
                 pic_count += 1
                 with open("Count.txt", "w+") as f:
                     f.write("%d" % pic_count)
-                time.sleep(50)
-            time.sleep(10)
-        if datetime.date.today() != current_day:
-            pic_count = check_date()
-            current_day = datetime.date.today()
+                time.sleep(60)
+            if datetime.date.today() != current_day:
+                pic_count = check_date()
+                current_day = datetime.date.today()
 
 
 def check_date():
