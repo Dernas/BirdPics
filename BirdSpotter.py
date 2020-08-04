@@ -10,6 +10,11 @@ from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
+pic_count = 0
+current_day = datetime.date.today()
+# global so it can accessed by main and update_count.
+# take_pic is used as a callback, so it can't return a count increment, and this lets us use it in both functions
+
 
 def main():
     # Check if IR sensor has picked up any birds.
@@ -17,30 +22,19 @@ def main():
     time.sleep(60)
     pir_input = 29
     start_pir(pir_input)
-    current_day = datetime.date.today()
     start_time = datetime.time(5, 0, 0)
     end_time = datetime.time(21, 0, 0)
-    pic_count = check_date()
-    while True:
+    global pic_count
+    check_date()
+    while 1:
         current_time = datetime.datetime.now().time()
         if start_time < current_time < end_time:
             # Assumed no birds between 21:00 and 5:00
-            if GPIO.input(pir_input):
-                camera = PiCamera()
-                camera.vflip = True
-                camera.hflip = True
-                take_pic(pic_count, camera)
-                camera.close()
-                pic_count += 1
-                with open("Count.txt", "w+") as f:
-                    f.write("%d" % pic_count)
-                time.sleep(60)
-            if datetime.date.today() != current_day:
-                pic_count = check_date()
-                current_day = datetime.date.today()
+            GPIO.add_event_detect(pir_input, GPIO.BOTH, callback=take_pic(pic_count))
 
 
 def check_date():
+    global pic_count
     # Check to see if it's a new day
     with open("Date.txt") as f:
         olddate = f.readline()
@@ -56,11 +50,13 @@ def check_date():
         with open("Count.txt", "r+") as g:
             g.write("1")
         pic_count = 1
-    return pic_count
 
 
-def take_pic(pic_num, camera):
+def take_pic(pic_num):
     # Take the picture.
+    camera = PiCamera()
+    camera.vflip = True
+    camera.hflip = True
     camera.start_preview()
     # set the dir
     ourdir = "/home/pi/Birds/BirdPics/"
@@ -70,6 +66,7 @@ def take_pic(pic_num, camera):
     # Camera needs 2 seconds to adjust
     camera.capture(picname)
     camera.stop_preview()
+    camera.close()
     # Send it to the drive
     try:
         send_pic(picname, ourdir)
@@ -81,6 +78,18 @@ def take_pic(pic_num, camera):
         # Rename the file to indicate it was saved offline
         os.rename(r"%s" % picname, r"OfflinePic " + datetime.datetime.now().strftime("%H:%M %d-%b-%Y") + ".jpg")
         pass
+    update_count()
+
+
+def update_count():
+    global pic_count
+    global current_day
+    pic_count += 1
+    with open("Count.txt", "w+") as f:
+        f.write("%d" % pic_count)
+    if datetime.date.today() != current_day:
+        check_date()
+        current_day = datetime.date.today()
 
 
 def start_pir(pir_input):
@@ -89,7 +98,6 @@ def start_pir(pir_input):
     GPIO.setwarnings(False)
     GPIO.setmode(GPIO.BOARD)
     GPIO.setup(pir_input, GPIO.IN)
-
 
 
 def login(ourdir):
