@@ -12,7 +12,7 @@ from google.auth.transport.requests import Request
 
 pic_count = 0
 current_day = datetime.date.today()
-# global so it can accessed by main and update_count.
+# global so it can accessed by main, takepic and update_count.
 # take_pic is used as a callback, so it can't return a count increment, and this lets us use it in both functions
 
 
@@ -27,12 +27,14 @@ def main():
     global pic_count
     check_date()
     sensor = False
+    print("While reached")
     while 1:
         current_time = datetime.datetime.now().time()
         if start_time < current_time < end_time and not sensor:
             # If we're in the correct time range and not checking for birds, start looking
-            GPIO.add_event_detect(pir_input, GPIO.BOTH, callback=take_pic(pic_count))
+            GPIO.add_event_detect(pir_input, GPIO.BOTH, callback=take_pic(), bouncetime=200)
             sensor = True
+            print("sensor on")
         elif start_time < current_time < end_time:
             pass
         elif sensor:
@@ -40,6 +42,7 @@ def main():
             GPIO.remove_event_detect(pir_input)
             sensor = False
         time.sleep(60)
+        print("sleep looped")
 
 
 def check_date():
@@ -61,15 +64,17 @@ def check_date():
         pic_count = 1
 
 
-def take_pic(pic_num):
+def take_pic():
     # Take the picture.
+    global pic_count
+    print("started pic")
     camera = PiCamera()
     camera.vflip = True
     camera.hflip = True
     camera.start_preview()
     # set the dir
     ourdir = "/home/pi/Birds/BirdPics/"
-    picname = ourdir + "AutoPicture " + str(pic_num) + ".jpg"
+    picname = ourdir + "AutoPicture " + str(pic_count) + ".jpg"
     # Save the pic, using pic_num to keep track
     time.sleep(2)
     # Camera needs 2 seconds to adjust
@@ -77,6 +82,7 @@ def take_pic(pic_num):
     camera.stop_preview()
     camera.close()
     # Send it to the drive
+    print("reached send")
     try:
         send_pic(picname, ourdir)
         send_offlines(ourdir)
@@ -87,7 +93,9 @@ def take_pic(pic_num):
         # Rename the file to indicate it was saved offline
         os.rename(r"%s" % picname, r"OfflinePic " + datetime.datetime.now().strftime("%H:%M %d-%b-%Y") + ".jpg")
         pass
+    print("reached update")
     update_count()
+    print("updated")
 
 
 def update_count():
