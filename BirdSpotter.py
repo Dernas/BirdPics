@@ -26,11 +26,20 @@ def main():
     end_time = datetime.time(21, 0, 0)
     global pic_count
     check_date()
+    sensor = False
     while 1:
         current_time = datetime.datetime.now().time()
-        if start_time < current_time < end_time:
-            # Assumed no birds between 21:00 and 5:00
+        if start_time < current_time < end_time and not sensor:
+            # If we're in the correct time range and not checking for birds, start looking
             GPIO.add_event_detect(pir_input, GPIO.BOTH, callback=take_pic(pic_count))
+            sensor = True
+        elif start_time < current_time < end_time:
+            pass
+        elif sensor:
+            # Assumed no birds between 21:00 and 5:00
+            GPIO.remove_event_detect(pir_input)
+            sensor = False
+        time.sleep(60)
 
 
 def check_date():
