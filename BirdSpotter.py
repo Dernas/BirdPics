@@ -31,7 +31,7 @@ def main():
         current_time = datetime.datetime.now().time()
         if start_time < current_time < end_time and not sensor:
             # If we're in the correct time range and not checking for birds, start looking
-            GPIO.add_event_detect(pir_input, GPIO., callback=take_pic, bouncetime=200)
+            GPIO.add_event_detect(pir_input, GPIO.RISING, callback=take_pic, bouncetime=200)
             sensor = True
         elif start_time < current_time < end_time:
             pass
@@ -62,7 +62,7 @@ def check_date():
 
 
 def take_pic(channel):
-    # Take the picture.
+    # Take the picture. Don't need the channel, but GPIO passes a number
     global pic_count
     camera = PiCamera()
     camera.vflip = True
