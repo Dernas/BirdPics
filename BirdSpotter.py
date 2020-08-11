@@ -31,7 +31,7 @@ def main():
         current_time = datetime.datetime.now().time()
         if start_time < current_time < end_time and not sensor:
             # If we're in the correct time range and not checking for birds, start looking
-            GPIO.add_event_detect(pir_input, GPIO.RISING, callback=take_pic, bouncetime=200)
+            GPIO.add_event_detect(pir_input, GPIO.BOTH, callback=take_pic, bouncetime=200)
             sensor = True
         elif start_time < current_time < end_time:
             pass
@@ -89,7 +89,6 @@ def take_pic(channel):
         os.rename(r"%s" % picname, r"OfflinePic " + datetime.datetime.now().strftime("%H:%M %d-%b-%Y") + ".jpg")
         pass
     update_count()
-    return True
 
 
 def update_count():
@@ -172,7 +171,7 @@ def send_pic(picname, ourdir):
             "name": foldername,
             "mimeType": "application/vnd.google-apps.folder",
             "parents": ["15Xn3O4BaGPRjun25PWNGyAZIX6p8NLFz"]
-            # The ID of the BirdPics folder. Must be in a list to work as a parent, for reasons known only to Google
+            # The ID of the BirdPics folder. Must be in a list to work as a parent
         }
         folder = service.files().create(body=folder_metadata,
                                         fields="id").execute()
