@@ -103,7 +103,7 @@ def update_count():
 
 
 def start_pir(pir_input):
-    # Pi pinout from https://learn.adafruit.com/assets/73285
+    # Pi pinout from https://www.raspberrypi.org/documentation/usage/gpio/
     # Base code from https://www.electronicwings.com/raspberry-pi/pir-motion-sensor-interfacing-with-raspberry-pi
     GPIO.setwarnings(False)
     GPIO.setmode(GPIO.BOARD)
