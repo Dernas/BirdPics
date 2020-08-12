@@ -50,3 +50,8 @@ Restart=always
 WantedBy=multi-user.target
 
 After that, set permissions on your service ("sudo chmod 644 /lib/systemd/system/birds.service"), then tell the Pi to run it on startup ("sudo systemctl daemon-reload", "sudo systemctl enable sample.service"). After a reboot, the program should run every time you start the Pi!
+
+5. (OPTIONAL) Easy manual pictures: To do this, you'll need a way to connect to your pi. I used SSH (https://www.raspberrypi.org/documentation/remote-access/ssh/). Once you're connected, you can use "sudo python3 /home/pi/birds/ManualPicTaker.py", or you can make it easy - use "sudo nano .bashrc", then add
+"PATH=$PATH:/home/pi/.local/bin
+alias bird=sudo python3 /home/pi/birds/ManualPicTaker.py"
+The first command tells the Pi where to look for python, and the second one (reboot to make this work) lets you take a picture by typing "bird" as soon as you connect. Good luck!
